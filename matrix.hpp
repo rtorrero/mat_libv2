@@ -17,6 +17,7 @@
 #include <cstring>
 #include <string>
 #include <complex>
+#include <regex>
 
 
 using namespace std;
@@ -235,27 +236,65 @@ namespace mat_lib
         elements__[offset__(i,j)]=init.begin()[i].begin()[j];
   }
 
+  // template<typename T>
+  // matrix<T>::matrix(const string& file_name) // constructor from a file
+  // : rows__{0},
+  //   columns__{0},
+  //   elements__{nullptr}
+  // {
+  //   ifstream ifs(file_name);
+  //   std::regex pattern("\\s*(-?\\d+(\\.\\d+)?),\\s*(-?\\d+(\\.\\d+)?)(?:,\\s*)?(?:\\n|$)");
+
+  //   if(!ifs)
+  //   {
+  //     ostringstream str_stream;
+  //     str_stream<<"cannot open file \""<<file_name<<"\"! ("
+  //       <<__func__<<"() in "<<__FILE__<<":"<<__LINE__<<")";
+  //     throw logic_error(str_stream.str());
+  //   }
+
+  //   ifs>>rows__>>columns__;
+  //   elements__=new element_t[rows__*columns__];
+
+  //   for(size_t i=0; i<rows__; i++)
+  //     for(size_t j=0; j<columns__; j++)
+  //       ifs>>elements__[offset__(i,j)];
+  // }
+
   template<typename T>
-  matrix<T>::matrix(const string& file_name) // constructor from a file
+  matrix<T>::matrix(const string& file_name)
   : rows__{0},
     columns__{0},
     elements__{nullptr}
   {
     ifstream ifs(file_name);
-    if(!ifs)
-    {
-      ostringstream str_stream;
-      str_stream<<"cannot open file \""<<file_name<<"\"! ("
-        <<__func__<<"() in "<<__FILE__<<":"<<__LINE__<<")";
-      throw logic_error(str_stream.str());
+    std::string data;
+    getline(ifs, data);
+
+    std::regex pattern("(\\d+)x(\\d+)");
+    std::smatch match;
+
+    // Extract dimensions from the data
+    if (std::regex_match(data, match, pattern)) {
+      rows__ = std::stoi(match[1].str());
+      columns__ = std::stoi(match[2].str());
+    } else {
+      throw std::runtime_error("Invalid matrix dimensions");
     }
 
-    ifs>>rows__>>columns__;
-    elements__=new element_t[rows__*columns__];
-
-    for(size_t i=0; i<rows__; i++)
-      for(size_t j=0; j<columns__; j++)
-        ifs>>elements__[offset__(i,j)];
+    // Extract elements from the string
+    std::string element;
+    std::stringstream ss(data);
+    while (std::getline(ss, element, ',')) {
+      elements__ = new double[rows__ * columns__];
+      for (size_t i = 0; i < rows__ * columns__; ++i) {
+        if (i % columns__ == 0) {
+          // Skip the first element of each row in the string
+          continue;
+        }
+        elements__[i] = std::stod(element);
+      }
+    }
   }
 
   template<typename T>
@@ -346,13 +385,7 @@ namespace mat_lib
       throw logic_error(str_stream.str());
     }
 
-    //ofs<<(*this)<<endl;
-    ofs<<rows__<<" "<<columns__<<"\n";
-    for(size_t i=0; i<rows__; i++)
-    {
-     for(size_t j=0; j<columns__; j++) ofs<<elements__[offset__(i,j)]<<" ";
-     ofs<<"\n";
-    }
+    ofs<<(*this)<<endl;
   }
 
   template<typename T>
