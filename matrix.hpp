@@ -17,6 +17,7 @@
 #include <cstring>
 #include <string>
 #include <complex>
+#include <regex>
 
 
 using namespace std;
@@ -236,27 +237,51 @@ namespace mat_lib
   }
 
   template<typename T>
-  matrix<T>::matrix(const string& file_name) // constructor from a file
-  : rows__{0},
-    columns__{0},
-    elements__{nullptr}
+  matrix<T>::matrix(const string& file_name)
+  : rows__{0}, columns__{0}, elements__{nullptr}
   {
-    ifstream ifs(file_name);
-    if(!ifs)
-    {
-      ostringstream str_stream;
-      str_stream<<"cannot open file \""<<file_name<<"\"! ("
-        <<__func__<<"() in "<<__FILE__<<":"<<__LINE__<<")";
-      throw logic_error(str_stream.str());
-    }
+      ifstream ifs(file_name);
+      if(!ifs) {
+          ostringstream str_stream;
+          str_stream << "cannot open file \"" << file_name << "\"! ("
+              << __func__ << "() in " << __FILE__ << ":" << __LINE__ << ")";
+          throw logic_error(str_stream.str());
+      }
 
-    ifs>>rows__>>columns__;
-    elements__=new element_t[rows__*columns__];
+      string content((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
 
-    for(size_t i=0; i<rows__; i++)
-      for(size_t j=0; j<columns__; j++)
-        ifs>>elements__[offset__(i,j)];
+      // Extract dimensions
+      regex dim_pattern(R"(mat_lib::matrix\[(\d+)x(\d+)\]\{([\s\S]*)\})");
+      smatch matches;
+
+      if (!regex_search(content, matches, dim_pattern)) {
+          throw invalid_argument("Invalid matrix format");
+      }
+
+      rows__ = stoul(matches[1]);
+      columns__ = stoul(matches[2]);
+      string matrix_content = matches[3];
+
+      elements__ = new element_t[rows__ * columns__];
+
+      // Extract numbers from matrix content only
+      regex number_pattern(R"([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)");
+      auto numbers_begin = sregex_iterator(matrix_content.begin(), matrix_content.end(), number_pattern);
+      auto numbers_end = sregex_iterator();
+
+      size_t idx = 0;
+      for (auto i = numbers_begin; i != numbers_end; ++i) {
+          if (idx >= rows__ * columns__) {
+              throw invalid_argument("Too many numbers in matrix file");
+          }
+          elements__[idx++] = stod(i->str());
+      }
+
+      if (idx != rows__ * columns__) {
+          throw invalid_argument("Not enough numbers in matrix file");
+      }
   }
+
 
   template<typename T>
   typename matrix<T>::element_t matrix<T>::at(size_t i, size_t j) const
@@ -346,13 +371,7 @@ namespace mat_lib
       throw logic_error(str_stream.str());
     }
 
-    //ofs<<(*this)<<endl;
-    ofs<<rows__<<" "<<columns__<<"\n";
-    for(size_t i=0; i<rows__; i++)
-    {
-     for(size_t j=0; j<columns__; j++) ofs<<elements__[offset__(i,j)]<<" ";
-     ofs<<"\n";
-    }
+    ofs<<(*this)<<endl;
   }
 
   template<typename T>

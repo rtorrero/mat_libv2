@@ -8,10 +8,10 @@ using namespace std;
 
 #include "matrix.hpp"
 #include "vector.hpp"
-using namespace mat_lib;
+//using namespace mat_lib;
 
-using matrix_t=matrix<double>;
-using vector_t=vector<double>;
+using matrix_t=mat_lib::matrix<double>;
+using vector_t=mat_lib::vector<double>;
 
 int main(int arc, char* argv[])
 try
@@ -99,7 +99,7 @@ try
   vector_t v_add = v + vector_t{4, 3, 2, 1};
   cout << "v + {4, 3, 2, 1}=" << v_add << endl;
 
-  vector v_sub = v - vector_t{1, 1, 1, 1};
+  vector_t v_sub = v - vector_t{1, 1, 1, 1};
   cout << "v - {1, 1, 1, 1}=" << v_sub << endl;
 
   // Dot product
