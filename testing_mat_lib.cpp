@@ -8,10 +8,10 @@ using namespace std;
 
 #include "matrix.hpp"
 #include "vector.hpp"
-//using namespace mat_lib;
 
 using matrix_t=mat_lib::matrix<double>;
 using vector_t=mat_lib::vector<double>;
+using complex_matrix_t=mat_lib::matrix<complex<double>>;
 
 int main(int arc, char* argv[])
 try
@@ -70,7 +70,26 @@ try
 
   cout<<~matrix_t{"at.matrix"}<<endl;
 
-  cout<<boolalpha<<(at==matrix_t{"at.matrix"})<<endl;
+  // Complex matrix tests
+  cout << "\n=== Complex Matrix Tests ===\n";
+
+  complex_matrix_t cm{
+    {{1.0, 2.0}, {2.0, -1.0}, {3.0, 1.0}},
+    {{0.0, 1.0}, {4.0, 0.0}, {2.0, -2.0}}
+  };
+  cout << "Complex matrix cm=" << cm << endl;
+
+  // Save complex matrix
+  cm.save_as("complex.matrix");
+
+  // Load complex matrix
+  complex_matrix_t cm_loaded{"complex.matrix"};
+  cout << "Loaded complex matrix=" << cm_loaded << endl;
+
+  // Test equality
+  cout << "Complex matrix: Original equals loaded: " << boolalpha << (cm == cm_loaded) << endl;
+
+  cout << "Double matrix: Original equals loaded: " << boolalpha << (at==matrix_t{"at.matrix"}) << endl;
 
   vector_t v{1, 2, 3, 4};
   cout << "v=" << v << endl;

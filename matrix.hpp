@@ -18,6 +18,7 @@
 #include <string>
 #include <complex>
 #include <regex>
+#include <iomanip>
 
 
 using namespace std;
@@ -237,6 +238,27 @@ namespace mat_lib
   }
 
   template<typename T>
+  T parse_number(const string& str) {
+      // For complex numbers
+      if constexpr (is_same_v<T, complex<float>> ||
+                  is_same_v<T, complex<double>> ||
+                  is_same_v<T, complex<long double>>) {
+          // Simple regex for complex format "(real,imag)"
+          regex complex_pattern(R"(\(([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+)\))");
+          smatch matches;
+          if (regex_match(str, matches, complex_pattern)) {
+              return T(stod(matches[1]), stod(matches[2]));
+          }
+          // If not complex format, treat as real number
+          return T(stod(str), 0);
+      }
+      // For real numbers
+      return stod(str);
+  }
+
+
+
+  template<typename T>
   matrix<T>::matrix(const string& file_name)
   : rows__{0}, columns__{0}, elements__{nullptr}
   {
@@ -265,7 +287,8 @@ namespace mat_lib
       elements__ = new element_t[rows__ * columns__];
 
       // Extract numbers from matrix content only
-      regex number_pattern(R"([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)");
+      //regex number_pattern(R"([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?(?:[-+][0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?i)?)");
+      regex number_pattern(R"(\(([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+)\)|[-+]?[0-9]*\.?[0-9]+)");
       auto numbers_begin = sregex_iterator(matrix_content.begin(), matrix_content.end(), number_pattern);
       auto numbers_end = sregex_iterator();
 
@@ -274,7 +297,7 @@ namespace mat_lib
           if (idx >= rows__ * columns__) {
               throw invalid_argument("Too many numbers in matrix file");
           }
-          elements__[idx++] = stod(i->str());
+          elements__[idx++] = parse_number<T>(i->str());
       }
 
       if (idx != rows__ * columns__) {
@@ -370,6 +393,9 @@ namespace mat_lib
         <<__func__<<"() in "<<__FILE__<<":"<<__LINE__<<")";
       throw logic_error(str_stream.str());
     }
+
+    // Set maximum precision for floating point numbers
+    ofs << setprecision(numeric_limits<T>::max_digits10) << fixed;
 
     ofs<<(*this)<<endl;
   }
