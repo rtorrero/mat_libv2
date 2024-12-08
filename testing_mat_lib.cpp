@@ -70,9 +70,6 @@ try
 
   cout<<~matrix_t{"at.matrix"}<<endl;
 
-  // Complex matrix tests
-  cout << "\n=== Complex Matrix Tests ===\n";
-
   complex_matrix_t cm{
     {{1.0, 2.0}, {2.0, -1.0}, {3.0, 1.0}},
     {{0.0, 1.0}, {4.0, 0.0}, {2.0, -2.0}}
@@ -86,10 +83,14 @@ try
   complex_matrix_t cm_loaded{"complex.matrix"};
   cout << "Loaded complex matrix=" << cm_loaded << endl;
 
-  // Test equality
+  // Test if the loaded complex matrix is equal to the original one
   cout << "Complex matrix: Original equals loaded: " << boolalpha << (cm == cm_loaded) << endl;
 
-  cout << "Double matrix: Original equals loaded: " << boolalpha << (at==matrix_t{"at.matrix"}) << endl;
+  // Load a matrix with floating-point decimals
+  matrix_t double_loaded{"at.matrix"};
+
+  // Check if the loaded matrix is equal to the original one due to precision loss
+  cout << "Double matrix: Original equals loaded: " << boolalpha << (at == double_loaded) << endl;
 
   vector_t v{1, 2, 3, 4};
   cout << "v=" << v << endl;
