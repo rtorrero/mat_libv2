@@ -62,21 +62,47 @@ public:
     v.elements__ = nullptr;
   }
 
-  explicit vector(const string &file_name) : size__{0}, elements__{nullptr} {
-    ifstream ifs(file_name);
-    if (!ifs) {
-      ostringstream str_stream;
-      str_stream << "cannot open file \"" << file_name << "\"! (" << __func__
-                 << "() in " << __FILE__ << ":" << __LINE__ << ")";
-      throw logic_error(str_stream.str());
-    }
+  explicit vector(const string& file_name) : size__{0}, elements__{nullptr} {
+      ifstream ifs(file_name);
+      if (!ifs) {
+          ostringstream str_stream;
+          str_stream << "cannot open file \"" << file_name << "\"! ("
+              << __func__ << "() in " << __FILE__ << ":" << __LINE__ << ")";
+          throw logic_error(str_stream.str());
+      }
 
-    ifs >> size__;
-    elements__ = new element_t[size__];
+      string content((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
 
-    for (size_t i = 0; i < size__; i++)
-      ifs >> elements__[i];
-  } // constructor from a file
+      // Extract dimension and content
+      regex vec_pattern(R"(mat_lib::vector\[(\d+)\]\{([\s\S]*)\})");
+      smatch matches;
+
+      if (!regex_search(content, matches, vec_pattern)) {
+          throw invalid_argument("Invalid vector format");
+      }
+
+      size__ = stoul(matches[1]);
+      string vector_content = matches[2];
+
+      elements__ = new element_t[size__];
+
+      // Extract numbers from vector content
+      regex number_pattern(R"(\(([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+)\)|[-+]?[0-9]*\.?[0-9]+)");
+      auto numbers_begin = sregex_iterator(vector_content.begin(), vector_content.end(), number_pattern);
+      auto numbers_end = sregex_iterator();
+
+      size_t idx = 0;
+      for (auto i = numbers_begin; i != numbers_end; ++i) {
+          if (idx >= size__) {
+              throw invalid_argument("Too many numbers in vector file");
+          }
+          elements__[idx++] = parse_number<T>(i->str());
+      }
+
+      if (idx != size__) {
+          throw invalid_argument("Not enough numbers in vector file");
+      }
+  }
 
   ~vector() { delete[] elements__; }
 
@@ -188,10 +214,7 @@ public:
       throw logic_error(str_stream.str());
     }
 
-    ofs << size__ << "\n";
-    for (size_t i = 0; i < size__; i++)
-      ofs << elements__[i] << " ";
-    ofs << "\n";
+    ofs<<(*this)<<endl;
   }
 
 private:

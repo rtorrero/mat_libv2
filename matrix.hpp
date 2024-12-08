@@ -256,8 +256,6 @@ namespace mat_lib
       return stod(str);
   }
 
-
-
   template<typename T>
   matrix<T>::matrix(const string& file_name)
   : rows__{0}, columns__{0}, elements__{nullptr}
